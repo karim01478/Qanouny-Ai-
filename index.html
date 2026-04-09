@@ -400,6 +400,13 @@ function clearChat() {
   box.innerHTML = "";
   addMessage("محادثة جديدة. كيف يمكنني مساعدتك اليوم؟", "bot");
 }
-</script>
+let apiKey = localStorage.getItem("groq_key") || "";
+
+function saveKey() {
+  const input = document.getElementById("apiKeyInput");
+  apiKey = input.value.trim();
+  localStorage.setItem("groq_key", apiKey);
+  alert("تم حفظ المفتاح");
+}</script>
 </body>
 </html>
