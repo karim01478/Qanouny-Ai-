@@ -1,7 +1,8 @@
 {
   "name": "Qanoun AI",
   "short_name": "Qanoun",
-  "start_url": ".",
+  "description": "المساعد القانوني المغربي الذكي",
+  "start_url": "/qanoun-ai/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
