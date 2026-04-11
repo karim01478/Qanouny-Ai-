@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qanoun AI - المساعد القانوني الذكي</title>
+    <!-- إضافة مكتبة Markdown لعرض النصوص بشكل منسق -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- إضافة خط عربي احترافي -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #0a192f 0%, #112240 100%);
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(17, 34, 64, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 800px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .header h1 {
+            color: #ffd700;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .header p {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+        }
+
+        .settings-section {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        .settings-section label {
+            display: block;
+            color: #ffd700;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .settings-section input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #e0e0e0;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .settings-section input::placeholder {
+            color: #707070;
+        }
+
+        .settings-section input:focus {
+            outline: none;
+            border-color: #ffd700;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #0a192f;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-clear {
+            background: rgba(200, 50, 50, 0.7);
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: rgba(220, 70, 70, 0.9);
+            transform: translateY(-2px);
+        }
+
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        #chat::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        #chat::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        #chat::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 215, 0, 0.5);
+        }
+
+        .msg {
+            margin: 10px 0;
+            padding: 10px 12px;
+            border-radius: 8px;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .msg.user {
+            background: rgba(255, 215, 0, 0.15);
+            border-left: 3px solid #ffd700;
+            text-align: right;
+            margin-left: 20px;
+        }
+
+        .msg.bot {
+            background: rgba(100, 150, 200, 0.15);
+            border-left: 3px solid #6496c8;
+            margin-right: 20px;
+        }
+
+        .msg.error {
+            background: rgba(200, 50, 50, 0.15);
+            border-left: 3px solid #c83232;
+        }
+
+        .msg.info {
+            background: rgba(100, 200, 100, 0.15);
+            border-left: 3px solid #64c864;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .msg-icon {
+            margin-right: 8px;
+            font-size: 1.2rem;
+        }
+
+        .msg-content {
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        /* تنسيق Markdown */
+        .msg.bot h1, .msg.bot h2, .msg.bot h3 {
+            color: #ffd700;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+
+        .msg.bot strong {
+            color: #ffed4e;
+        }
+
+        .msg.bot ul, .msg.bot ol {
+            margin: 10px 0;
+            padding-right: 20px;
+        }
+
+        .msg.bot li {
+            margin: 5px 0;
+        }
+
+        .msg.bot code {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #64ff64;
+            font-family: 'Courier New', monospace;
+        }
+
+        .msg.bot pre {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .msg.bot blockquote {
+            border-right: 3px solid #ffd700;
+            padding-right: 10px;
+            margin: 10px 0;
+            color: #b0b0b0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #e0e0e0;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.95rem;
+            resize: none;
+            max-height: 60px;
+        }
+
+        #userInput::placeholder {
+            color: #707070;
+        }
+
+        #userInput:focus {
+            outline: none;
+            border-color: #ffd700;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-send {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #0a192f;
+            font-weight: bold;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-top: 2px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .api-status {
+            font-size: 0.8rem;
+            color: #a0a0a0;
+            margin-top: 5px;
+        }
+
+        .api-status.saved {
+            color: #64c864;
+        }
+
+        .api-status.error {
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                height: 100vh;
+                max-height: none;
+                border-radius: 0;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .msg {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>⚖️ Qanoun AI</h1>
+        <p>المساعد القانوني الذكي - استشارات قانونية فورية</p>
+    </div>
+
+    <div class="settings-section">
+        <label for="apiKeyInput">🔑 مفتاح Groq API</label>
+        <input id="apiKeyInput" type="password" placeholder="أدخل مفتاح Groq API الخاص بك">
+        <div class="btn-group">
+            <button class="btn-save" onclick="saveKey()">💾 حفظ المفتاح</button>
+            <button class="btn-clear" onclick="clearKey()">🗑️ مسح</button>
+        </div>
+        <div class="api-status" id="apiStatus"></div>
+    </div>
+
+    <div id="chat"></div>
+
+    <div class="input-group">
+        <input 
+            id="userInput" 
+            type="text" 
+            placeholder="اسأل سؤالك القانوني..." 
+            onkeypress="handleKeyPress(event)"
+        >
+        <button class="btn-send" id="sendBtn" onclick="sendMessage()">📤</button>
+    </div>
+
+</div>
+
+<script>
+
+// إعدادات التطبيق
+let apiKey = localStorage.getItem("groq_key") || "";
+let history = [];
+let isLoading = false;
+
+// تحديث حالة API عند تحميل الصفحة
+window.addEventListener('load', () => {
+    updateApiStatus();
+});
+
+// تحديث حالة API
+function updateApiStatus() {
+    const statusDiv = document.getElementById('apiStatus');
+    if (apiKey) {
+        statusDiv.textContent = '✅ المفتاح محفوظ بنجاح';
+        statusDiv.className = 'api-status saved';
+    } else {
+        statusDiv.textContent = '⚠️ لم يتم حفظ مفتاح API';
+        statusDiv.className = 'api-status error';
+    }
+}
+
+// حفظ مفتاح API
+function saveKey() {
+    const input = document.getElementById("apiKeyInput");
+    const key = input.value.trim();
+    
+    if (!key) {
+        addMessage("الرجاء إدخال مفتاح API صحيح", "error");
+        return;
+    }
+    
+    apiKey = key;
+    localStorage.setItem("groq_key", apiKey);
+    input.value = "";
+    updateApiStatus();
+    addMessage("✅ تم حفظ مفتاح API بنجاح", "info");
+}
+
+// مسح مفتاح API
+function clearKey() {
+    if (confirm("هل أنت متأكد من رغبتك في مسح مفتاح API؟")) {
+        apiKey = "";
+        localStorage.removeItem("groq_key");
+        document.getElementById("apiKeyInput").value = "";
+        updateApiStatus();
+        addMessage("🗑️ تم مسح مفتاح API", "info");
+    }
+}
+
+// إضافة رسالة إلى الدردشة
+function addMessage(text, role) {
+    const chatDiv = document.getElementById("chat");
+    const msgDiv = document.createElement("div");
+    msgDiv.className = `msg ${role}`;
+    
+    let icon = "";
+    let content = text;
+    
+    if (role === "user") {
+        icon = "👤";
+    } else if (role === "bot") {
+        icon = "🤖";
+        // تحويل Markdown إلى HTML
+        content = marked.parse(text);
+    } else if (role === "error") {
+        icon = "❌";
+    } else if (role === "info") {
+        icon = "ℹ️";
+    }
+    
+    msgDiv.innerHTML = `<span class="msg-icon">${icon}</span><div class="msg-content">${content}</div>`;
+    chatDiv.appendChild(msgDiv);
+    
+    // التمرير التلقائي إلى أسفل
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+}
+
+// معالجة الضغط على Enter
+function handleKeyPress(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+}
+
+// إرسال الرسالة
+async function sendMessage() {
+    if (!apiKey) {
+        addMessage("الرجاء حفظ مفتاح API أولاً", "error");
+        return;
+    }
+
+    const input = document.getElementById("userInput");
+    const text = input.value.trim();
+    
+    if (!text) return;
+
+    input.value = "";
+    input.disabled = true;
+    document.getElementById("sendBtn").disabled = true;
+
+    addMessage(text, "user");
+    history.push({ role: "user", content: text });
+
+    try {
+        // إضافة مؤشر تحميل
+        const loadingDiv = document.createElement("div");
+        loadingDiv.className = "msg bot";
+        loadingDiv.innerHTML = `<span class="loading-spinner"></span>جاري البحث عن الإجابة...`;
+        document.getElementById("chat").appendChild(loadingDiv);
+        document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + apiKey
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    {
+                        role: "system",
+                        content: "أنت مساعد قانوني متخصص في القانون المغربي والقانون العام. قدم إجابات دقيقة وموثوقة ومفيدة للأسئلة القانونية. استخدم تنسيق واضح مع نقاط وعناوين عند الحاجة."
+                    },
+                    ...history
+                ]
+            })
+        });
+
+        const data = await res.json();
+
+        // إزالة مؤشر التحميل
+        loadingDiv.remove();
+
+        if (data.error) {
+            addMessage(`خطأ: ${data.error.message}`, "error");
+            return;
+        }
+
+        if (!data.choices || !data.choices[0]) {
+            addMessage("حدث خطأ في الحصول على الإجابة", "error");
+            return;
+        }
+
+        const reply = data.choices[0].message.content;
+        addMessage(reply, "bot");
+        history.push({ role: "assistant", content: reply });
+
+    } catch (e) {
+        addMessage(`خطأ في الاتصال: ${e.message}`, "error");
+    } finally {
+        input.disabled = false;
+        document.getElementById("sendBtn").disabled = false;
+        input.focus();
+    }
+}
+
+// إضافة رسالة ترحيب عند تحميل الصفحة
+window.addEventListener('load', () => {
+    addMessage("مرحباً بك في Qanoun AI! 👋 أنا هنا لمساعدتك في الأسئلة القانونية. يرجى حفظ مفتاح Groq API أولاً للبدء.", "info");
+});
+
+</script>
+
+</body>
+</html>
