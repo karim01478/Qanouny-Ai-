@@ -7,60 +7,69 @@
 
 <style>
 body {
-  font-family: Arial;
-  background: #0a192f;
+  margin: 0;
+  font-family: 'Arial';
+  background: #0f172a;
   color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
 }
 
 .container {
-  width: 100%;
   max-width: 500px;
-  background: #112240;
-  padding: 15px;
+  margin: auto;
+  padding: 10px;
+}
+
+.title {
+  text-align: center;
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.chat {
+  height: 400px;
+  overflow-y: auto;
+  background: #1e293b;
+  padding: 10px;
   border-radius: 10px;
 }
 
-input, button {
-  width: 100%;
-  padding: 10px;
+.msg {
+  padding: 10px 14px;
+  border-radius: 15px;
+  margin: 6px 0;
+  max-width: 80%;
+  line-height: 1.6;
+}
+
+.user {
+  background: #1e90ff;
+  margin-left: auto;
+}
+
+.bot {
+  background: #334155;
+  margin-right: auto;
+}
+
+.input-box {
+  display: flex;
   margin-top: 10px;
+}
+
+input {
+  flex: 1;
+  padding: 10px;
   border-radius: 8px;
   border: none;
 }
 
 button {
-  background: gold;
-  cursor: pointer;
-}
-
-#chat {
-  height: 300px;
-  overflow-y: auto;
-  margin-top: 10px;
-  background: #020c1b;
   padding: 10px;
-  border-radius: 10px;
-}
-
-/* ✅ UI جديد */
-.msg {
-  padding: 8px;
+  margin-right: 5px;
+  background: gold;
+  border: none;
   border-radius: 8px;
-  margin: 5px;
-}
-
-.user {
-  background: #1e90ff;
-  text-align: right;
-}
-
-.bot {
-  background: #333;
-  text-align: left;
+  cursor: pointer;
 }
 </style>
 </head>
@@ -68,75 +77,58 @@ button {
 <body>
 
 <div class="container">
+  <div class="title">Qanoun AI ⚖️</div>
 
-<h3>⚖️ Qanoun AI</h3>
+  <div id="chat" class="chat"></div>
 
-<input id="apiKeyInput" placeholder="دخل Groq API Key">
-<button onclick="saveKey()">حفظ المفتاح</button>
-
-<div id="chat"></div>
-
-<input id="userInput" placeholder="كتب سؤالك">
-<button onclick="sendMessage()">إرسال</button>
-
+  <div class="input-box">
+    <input id="userInput" placeholder="اكتب سؤالك القانوني..." />
+    <button onclick="sendMessage()">إرسال</button>
+  </div>
 </div>
 
 <script>
-
-let apiKey = localStorage.getItem("groq_key") || "";
 let history = [];
 
-/* ✅ حفظ المفتاح */
-function saveKey() {
-  const input = document.getElementById("apiKeyInput");
-  apiKey = input.value.trim();
-  localStorage.setItem("groq_key", apiKey);
-  alert("تم حفظ المفتاح");
-}
-
-/* ✅ عرض الرسائل */
 function addMessage(text, role) {
   const div = document.createElement("div");
   div.className = "msg " + role;
   div.innerText = text;
-  document.getElementById("chat").appendChild(div);
+
+  const chat = document.getElementById("chat");
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
-/* ✅ إرسال السؤال */
+function addTyping() {
+  addMessage("⏳ جاري الكتابة...", "bot");
+}
+
+function removeTyping() {
+  const chat = document.getElementById("chat");
+  if (chat.lastChild) chat.removeChild(chat.lastChild);
+}
+
 async function sendMessage() {
-
-  if (!apiKey) {
-    alert("دخل API Key");
-    return;
-  }
-
   const input = document.getElementById("userInput");
   const text = input.value.trim();
   if (!text) return;
 
   input.value = "";
-
   addMessage(text, "user");
+
   history.push({ role: "user", content: text });
 
-  /* typing */
-  const typing = document.createElement("div");
-  typing.className = "msg bot";
-  typing.innerText = "... جاري التفكير";
-  document.getElementById("chat").appendChild(typing);
+  addTyping();
 
   try {
-
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const res = await fetch("http://localhost:3000/chat", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + apiKey
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-
-        /* ✅ SYSTEM PROMPT */
         messages: [
           {
             role: "system",
@@ -145,38 +137,37 @@ async function sendMessage() {
 
 القواعد:
 - تعتمد فقط على القانون المغربي
-- تشرح بطريقة مبسطة وواضحة
-- تعطي خطوات عملية (ماذا يفعل الشخص)
-- إذا كان هناك شك، قل "يفضل استشارة محام"
 - لا تخترع قوانين
-- نظم الجواب: تعريف → حكم قانوني → ماذا تفعل
+- اشرح بطريقة بسيطة
+
+نظم الجواب:
+1. التعريف
+2. الحكم القانوني
+3. ماذا يفعل الشخص
 `
           },
           ...history
-        ]
+        ],
+        temperature: 0.4,
+        max_tokens: 1024
       })
     });
 
     const data = await res.json();
 
-    typing.remove();
+    removeTyping();
 
-    if (data.error) {
-      addMessage("خطأ: " + data.error.message, "bot");
-      return;
-    }
+    const reply = data.choices?.[0]?.message?.content || "خطأ";
 
-    const reply = data.choices[0].message.content;
     addMessage(reply, "bot");
 
     history.push({ role: "assistant", content: reply });
 
   } catch (e) {
-    typing.remove();
-    addMessage("خطأ في الاتصال", "bot");
+    removeTyping();
+    addMessage("❌ خطأ في الاتصال بالسيرفر", "bot");
   }
 }
-
 </script>
 
 </body>
