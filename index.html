@@ -1,73 +1,3 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Qanoun AI</title>
-
-<style>
-body {
-  background: #0b1d3a;
-  font-family: Arial;
-  color: white;
-  padding: 10px;
-}
-
-#chatBox {
-  height: 400px;
-  overflow-y: auto;
-  background: #111;
-  padding: 10px;
-  border-radius: 10px;
-}
-
-.user-msg {
-  background: #2d8cf0;
-  padding: 10px;
-  margin: 5px;
-  border-radius: 10px;
-  text-align: right;
-}
-
-.bot-msg {
-  background: #333;
-  padding: 10px;
-  margin: 5px;
-  border-radius: 10px;
-}
-
-.error {
-  background: red;
-}
-
-input {
-  width: 75%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: none;
-}
-
-button {
-  padding: 10px;
-  background: gold;
-  border: none;
-  border-radius: 8px;
-}
-</style>
-</head>
-
-<body>
-
-<h2>⚖️ Qanoun AI</h2>
-
-<div id="chatBox"></div>
-
-<input id="userInput" placeholder="اكتب سؤالك..." />
-<button onclick="sendMessage()">إرسال</button>
-
-<script>
 async function sendMessage() {
   const input = document.getElementById("userInput");
   const chatBox = document.getElementById("chatBox");
@@ -75,9 +5,11 @@ async function sendMessage() {
   const userMessage = input.value.trim();
   if (!userMessage) return;
 
+  // عرض رسالة المستخدم
   chatBox.innerHTML += `<div class="user-msg">${userMessage}</div>`;
   input.value = "";
 
+  // رسالة loading
   const loadingMsg = document.createElement("div");
   loadingMsg.className = "bot-msg";
   loadingMsg.innerText = "⏳ جاري المعالجة...";
@@ -90,31 +22,46 @@ async function sendMessage() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama3-70b-8192",
         messages: [
-          { role: "system", content: "أنت مساعد قانوني مغربي." },
-          { role: "user", content: userMessage }
+          {
+            role: "user",
+            content: userMessage
+          }
         ]
       })
     });
 
+    // تحقق من response
+    if (!response.ok) {
+      throw new Error("Server error: " + response.status);
+    }
+
     const data = await response.json();
     loadingMsg.remove();
 
+    console.log("API RESPONSE:", data);
+
     let reply = "⚠️ لا يوجد جواب";
+
+    // الحالة العادية
     if (data.choices && data.choices.length > 0) {
-      reply = data.choices[0].message.content;
+      reply = data.choices[0]?.message?.content || reply;
+    }
+
+    // إذا كان error من API
+    if (data.error) {
+      reply = "❌ خطأ: " + (data.error.message || data.error);
     }
 
     chatBox.innerHTML += `<div class="bot-msg">${reply}</div>`;
-  } catch (err) {
+
+  } catch (error) {
     loadingMsg.remove();
-    chatBox.innerHTML += `<div class="bot-msg error">❌ خطأ في السيرفر</div>`;
+
+    chatBox.innerHTML += `<div class="bot-msg">❌ خطأ في الاتصال بالسيرفر</div>`;
+
+    console.error("ERROR:", error);
   }
 
   chatBox.scrollTop = chatBox.scrollHeight;
 }
-</script>
-
-</body>
-</html>
